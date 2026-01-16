@@ -45,7 +45,7 @@ jobs:
     name: Continuous Deployment
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && secrets.SERVER_HOST != ''
 
     steps:
       - name: Checkout repository
