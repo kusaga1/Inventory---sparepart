@@ -60,9 +60,6 @@ jobs:
           script: |
             cd /var/www/inventory-sparepart
             git pull origin main
-            composer install --no-dev
-            php artisan migrate --force
-            php artisan optimize:clear
-            php artisan cache:clear
-            php artisan config:cache
-            sudo systemctl restart nginx
+            composer install --no-dev --no-interaction
+            chmod -R 755 .
+            echo "Deployment completed successfully"
