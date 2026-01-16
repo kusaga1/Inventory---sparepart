@@ -24,7 +24,11 @@ jobs:
         run: composer clear-cache
 
       - name: Install Dependencies
-        run: composer install --no-progress --prefer-dist --optimize-autoloader
+        run: composer install --no-progress --prefer-dist --no-autoloader
+
+      - name: Generate Autoloader
+        run: composer dump-autoload --optimize
+
       - name: Copy Environment
         run: cp .env.example .env
 
