@@ -214,18 +214,11 @@ tr:hover { background: #f1f1f1; }
     <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
     <h2><i class="fas fa-warehouse"></i> <span>Inventaris</span></h2>
     <a href="index.php"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+    <a href="kelola_user.php"><i class="fas fa-user-gear"></i> <span>Kelola User</span></a>
     <a href="sparepart.php"><i class="fas fa-cogs"></i> <span>Manajemen Sparepart</span></a>
     <a href="masuk.php"><i class="fas fa-arrow-down"></i> <span>Stok Masuk</span></a>
     <a href="keluar.php" class="active"><i class="fas fa-arrow-up"></i> <span>Stok Keluar</span></a>
-    <div class="submenu">
-        <a href="javascript:void(0)" class="submenu-toggle">
-            <i class="fas fa-file-alt"></i> <span>Laporan Sparepart</span> <i class="fas fa-caret-down" style="margin-left:auto;"></i>
-        </a>
-        <div class="submenu-content">
-            <a href="laporan_masuk.php"><i class="fas fa-arrow-down"></i> <span>Laporan Masuk</span></a>
-            <a href="laporan_keluar.php"><i class="fas fa-arrow-up"></i> <span>Laporan Keluar</span></a>
-        </div>
-    </div>
+    <a href="laporan_sparepart.php"><i class="fas fa-file-alt"></i> <span>Laporan Sparepart</span></a>
     <a href="logout.php" class="logout"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a>
 </div>
 

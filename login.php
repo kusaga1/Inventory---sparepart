@@ -4,17 +4,26 @@ include "koneksi.php";
 
 if (isset($_POST['login'])) {
     $username = $_POST['username'];
-    $password = md5($_POST['password']);
+    $password = $_POST['password'];
 
-    $query = mysqli_query($koneksi, "SELECT * FROM users WHERE username='$username' AND password='$password'");
-    $cek = mysqli_num_rows($query);
+    // Ambil data user
+    $query = mysqli_query($koneksi, "SELECT * FROM users WHERE username='$username'");
+    $data = mysqli_fetch_assoc($query);
 
-    if ($cek > 0) {
-        $_SESSION['username'] = $username;
-        header("Location: index.php");
-        exit;
+    // Cek apakah user ada
+    if ($data) {
+        // Verifikasi password dengan password_verify
+        if (password_verify($password, $data['password'])) {
+            $_SESSION['username'] = $data['username'];
+            $_SESSION['role'] = $data['role'];
+
+            header("Location: index.php");
+            exit;
+        } else {
+            echo "<script>alert('Password salah!');</script>";
+        }
     } else {
-        echo "<script>alert('Username atau password salah!');</script>";
+        echo "<script>alert('Username tidak ditemukan!');</script>";
     }
 }
 ?>

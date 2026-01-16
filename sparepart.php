@@ -18,17 +18,32 @@ if (isset($_POST['tambah'])) {
     $nama = mysqli_real_escape_string($koneksi, $_POST['nama']);
     $satuan = mysqli_real_escape_string($koneksi, $_POST['satuan']); 
     $stok_minimum = (int)$_POST['stok_minimum'];
+    $stok = isset($_POST['stok']) ? (int)$_POST['stok'] : 0; // default stok awal
 
-   $insert = mysqli_query($koneksi, "
-    INSERT INTO sparepart (kode_sparepart, nama_sparepart, satuan, stok)
-    VALUES ('$kode', '$nama', '$satuan', '$stok')
-    ON DUPLICATE KEY UPDATE 
-        nama_sparepart = VALUES(nama_sparepart),
-        satuan = VALUES(satuan),
-        stok = VALUES(stok)
-");
-    mysqli_query($koneksi, $query) or die(mysqli_error($koneksi));
+    // === BATAS MAKSIMUM STOK ===
+    $stok_maksimum = 100; // ubah sesuai kebutuhan
+
+    if ($stok > $stok_maksimum) {
+        echo "<script>alert('❌ Gagal menambahkan! Stok melebihi batas maksimum ($stok_maksimum).');</script>";
+    } else {
+        $insert = mysqli_query($koneksi, "
+            INSERT INTO sparepart (kode_sparepart, nama_sparepart, satuan, stok)
+            VALUES ('$kode', '$nama', '$satuan', '$stok')
+            ON DUPLICATE KEY UPDATE 
+                nama_sparepart = VALUES(nama_sparepart),
+                satuan = VALUES(satuan),
+                stok = VALUES(stok)
+        ");
+
+        if ($insert) {
+            echo "<script>alert('✅ Sparepart berhasil ditambahkan!');</script>";
+        } else {
+            echo "<script>alert('❌ Gagal menambahkan data!');</script>";
+        }
+    }
 }
+
+
 
 // Hapus data
 if (isset($_GET['hapus'])) {
@@ -68,7 +83,8 @@ if (isset($_POST['import'])) {
             $kode = mysqli_real_escape_string($koneksi, $sheetData[$i][0]);
             $nama = mysqli_real_escape_string($koneksi, $sheetData[$i][1]); 
             $satuan = mysqli_real_escape_string($koneksi, $sheetData[$i][2]);
-            $stok = (int)$sheetData[$i][3];
+            $stok = isset($sheetData[$i][3]) && $sheetData[$i][3] !== '' ? (int)$sheetData[$i][3] : 0;
+
 
             if ($kode != '' && $nama != '') {   
                 $insert = mysqli_query($koneksi, "INSERT INTO sparepart 
@@ -254,18 +270,11 @@ if (isset($_POST['import'])) {
     <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
     <h2><i class="fas fa-warehouse"></i> <span>Inventaris</span></h2>
     <a href="index.php"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+    <a href="kelola_user.php"><i class="fas fa-user-gear"></i> <span>Kelola User</span></a>
     <a href="sparepart.php" class="active"><i class="fas fa-cogs"></i> <span>Manajemen Sparepart</span></a>
     <a href="masuk.php"><i class="fas fa-arrow-down"></i> <span>Stok Masuk</span></a>
     <a href="keluar.php"><i class="fas fa-arrow-up"></i> <span>Stok Keluar</span></a>
-    <div class="submenu">
-        <a href="javascript:void(0)" class="submenu-toggle">
-            <i class="fas fa-file-alt"></i> <span>Laporan Sparepart</span> <i class="fas fa-caret-down" style="margin-left:auto;"></i>
-        </a>
-        <div class="submenu-content">
-            <a href="laporan_masuk.php"><i class="fas fa-arrow-down"></i> <span>Laporan Masuk</span></a>
-            <a href="laporan_keluar.php"><i class="fas fa-arrow-up"></i> <span>Laporan Keluar</span></a>
-        </div>
-    </div>
+    <a href="laporan_sparepart.php"><i class="fas fa-file-alt"></i> <span>Laporan Sparepart</span></a>
     <a href="logout.php" class="logout"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a>
 </div>
 

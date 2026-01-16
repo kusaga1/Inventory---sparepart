@@ -6,31 +6,79 @@ if (!isset($_SESSION['username'])) {
 }
 
 include "koneksi.php";
+require 'vendor/autoload.php'; // Import PhpSpreadsheet
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
+
 
 $notif = "";
 
-if (isset($_POST['simpan'])) {
+if (isset($_POST['simpan'])) { 
     $id_sparepart = mysqli_real_escape_string($koneksi, $_POST['id_sparepart']);
-    $jumlah       = (int) $_POST['jumlah'];
-    $supplier     = mysqli_real_escape_string($koneksi, $_POST['supplier']);
-    $tanggal      = date("Y-m-d");
+    $jumlah = (int) $_POST['jumlah']; 
+    $supplier = mysqli_real_escape_string($koneksi, $_POST['supplier']); 
+    $tanggal = date("Y-m-d");
+    if ($jumlah > 0) { $insert = mysqli_query($koneksi, "INSERT INTO transaksi_masuk (id_sparepart, tanggal, jumlah, supplier) 
+    VALUES ('$id_sparepart','$tanggal','$jumlah','$supplier')");
+    $update = mysqli_query($koneksi, "UPDATE sparepart SET stok = stok + $jumlah WHERE id_sparepart='$id_sparepart'");
+    if ($insert && $update) { 
+        $notif = "<div class='success'>✅ Data berhasil disimpan!
+    </div>";
+    header("Location: masuk.php"); // ⬅️ cegah data ganda saat refresh
+        } else { 
+            $notif = "<div class='error'>❌ Gagal menyimpan data!
+</div>";
+        } 
+        } else { 
+            $notif = "<div class='error'>⚠️ Jumlah tidak valid!</div>"; 
+         } 
+        } 
 
-    if ($jumlah > 0) {
-        $insert = mysqli_query($koneksi, "INSERT INTO transaksi_masuk (id_sparepart, tanggal, jumlah, supplier) 
-            VALUES ('$id_sparepart','$tanggal','$jumlah','$supplier')");
+// === Import Excel ===
+if (isset($_POST['import'])) {
+    if (isset($_FILES['file_excel']['name']) && $_FILES['file_excel']['error'] == 0) {
+        $file = $_FILES['file_excel']['tmp_name'];
+        $reader = new Xlsx();
+        $spreadsheet = $reader->load($file);
+        $sheetData = $spreadsheet->getActiveSheet()->toArray();
 
-        $update = mysqli_query($koneksi, "UPDATE sparepart SET stok = stok + $jumlah WHERE id_sparepart='$id_sparepart'");
+        $rowCount = 0;
+        $tanggal = date("Y-m-d");
 
-        if ($insert && $update) {
-            $notif = "<div class='success'>✅ Data berhasil disimpan!</div>";
-        } else {
-            $notif = "<div class='error'>❌ Gagal menyimpan data!</div>";
+        // Lewati baris pertama (header)
+        for ($i = 1; $i < count($sheetData); $i++) {
+            $kode = mysqli_real_escape_string($koneksi, $sheetData[$i][0]);
+            $nama = mysqli_real_escape_string($koneksi, $sheetData[$i][1]);
+            $jumlah = (int)$sheetData[$i][2];
+            $supplier = mysqli_real_escape_string($koneksi, $sheetData[$i][3]);
+
+            if ($kode != "" && $jumlah > 0) {
+                // Cari id sparepart berdasarkan kode
+                $cek = mysqli_query($koneksi, "SELECT id_sparepart FROM sparepart WHERE kode_sparepart='$kode'");
+                if (mysqli_num_rows($cek) > 0) {
+                    $id_sparepart = mysqli_fetch_assoc($cek)['id_sparepart'];
+
+                    // Tambah ke transaksi_masuk
+                    $insert = mysqli_query($koneksi, "INSERT INTO transaksi_masuk (id_sparepart, tanggal, jumlah, supplier)
+                                                      VALUES ('$id_sparepart','$tanggal','$jumlah','$supplier')");
+                    // Update stok
+                    $update = mysqli_query($koneksi, "UPDATE sparepart SET stok = stok + $jumlah WHERE id_sparepart='$id_sparepart'");
+                    if ($insert && $update) $rowCount++;
+                }
+            }
         }
+
+        $notif = "<div class='success'>✅ Import berhasil! $rowCount data stok masuk ditambahkan.</div>";
     } else {
-        $notif = "<div class='error'>⚠️ Jumlah tidak valid!</div>";
+        $notif = "<div class='error'>⚠️ File tidak valid atau belum dipilih.</div>";
     }
-}
-?>
+}            
+
+
+    ?>
+
+
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -207,18 +255,11 @@ if (isset($_POST['simpan'])) {
     <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
     <h2><i class="fas fa-warehouse"></i> <span>Inventaris</span></h2>
     <a href="index.php"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+    <a href="kelola_user.php"><i class="fas fa-user-gear"></i> <span>Kelola User</span></a>
     <a href="sparepart.php"><i class="fas fa-cogs"></i> <span>Manajemen Sparepart</span></a>
     <a href="masuk.php" class="active"><i class="fas fa-arrow-down"></i> <span>Stok Masuk</span></a>
     <a href="keluar.php"><i class="fas fa-arrow-up"></i> <span>Stok Keluar</span></a>
-    <div class="submenu">
-        <a href="javascript:void(0)" class="submenu-toggle">
-            <i class="fas fa-file-alt"></i> <span>Laporan Sparepart</span> <i class="fas fa-caret-down" style="margin-left:auto;"></i>
-        </a>
-        <div class="submenu-content">
-            <a href="laporan_masuk.php"><i class="fas fa-arrow-down"></i> <span>Laporan Masuk</span></a>
-            <a href="laporan_keluar.php"><i class="fas fa-arrow-up"></i> <span>Laporan Keluar</span></a>
-        </div>
-    </div>
+    <a href="laporan_sparepart.php"><i class="fas fa-file-alt"></i> <span>Laporan Sparepart</span></a>
     <a href="logout.php" class="logout"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a>
 </div>
 
@@ -261,6 +302,18 @@ if (isset($_POST['simpan'])) {
         </form>
     </div>
 
+<!-- Form Import Excel -->
+    <div class="card" style="background: #eafaf1; border-left: 5px solid #27ae60;">
+        <h2><i class="fas fa-file-excel"></i> Import Sparepart dari Excel</h2>
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="file_excel" required>
+            <button type="submit" name="import" class="btn btn-import"><i class="fas fa-upload"></i> Import</button>
+        </form>
+        <p style="font-size:14px;color:#555;margin-top:8px;">
+            Format kolom (urutkan di Excel): <b>Kode Sparepart | Nama Sparepart | Jumlah | Supplier</b>
+        </p>
+    </div>
+    
     <!-- Riwayat Stok Masuk -->
 <div class="card">
     <h2><i class="fas fa-history"></i> Riwayat Stok Masuk</h2>
@@ -269,7 +322,8 @@ if (isset($_POST['simpan'])) {
             <thead>
                 <tr>
                     <th>No</th>
-                    <th>Sparepart</th>
+                    <th>Kode Sparepart</th>
+                    <th>Nama Sparepart</th>
                     <th>Jumlah</th>
                     <th>Supplier</th>
                     <th>Tanggal</th>
@@ -277,15 +331,16 @@ if (isset($_POST['simpan'])) {
             </thead>
             <tbody>
             <?php
-            $riwayat = mysqli_query($koneksi, "SELECT t.tanggal, s.nama_sparepart, t.jumlah, t.supplier 
+            $riwayat = mysqli_query($koneksi, "SELECT t.tanggal, s.kode_sparepart, s.nama_sparepart, t.jumlah, t.supplier 
                                                FROM transaksi_masuk t 
                                                JOIN sparepart s ON t.id_sparepart = s.id_sparepart 
-                                               ORDER BY t.tanggal DESC LIMIT 10");
+                                               ORDER BY t.tanggal DESC ");
             $no = 1;
             if(mysqli_num_rows($riwayat) > 0){
                 while($row = mysqli_fetch_array($riwayat)){
                     echo "<tr>
                             <td>".$no++."</td>
+                            <td>".$row['kode_sparepart']."</td>
                             <td>".$row['nama_sparepart']."</td>
                             <td>".$row['jumlah']."</td>
                             <td>".$row['supplier']."</td>
