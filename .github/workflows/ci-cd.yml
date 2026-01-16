@@ -1,0 +1,21 @@
+name: CI/CD PHP
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Ambil kode
+      uses: actions/checkout@v3
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+
+    - name: Cek sintaks PHP
+      run: find . -name "*.php" -exec php -l {} \;
