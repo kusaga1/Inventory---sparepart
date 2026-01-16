@@ -5,22 +5,6 @@ on:
     branches: [ "main" ]
 
 jobs:
-<<<<<<< HEAD
-  ci:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Ambil kode
-      uses: actions/checkout@v3
-
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.1'
-
-    - name: Cek sintaks PHP
-      run: find . -name "*.php" -exec php -l {} \;
-=======
   build:
     name: Continuous Integration (Build & Test)
     runs-on: ubuntu-latest
@@ -36,9 +20,11 @@ jobs:
           extensions: mbstring, xml, bcmath, intl, mysql
           coverage: none
 
+      - name: Clear Composer Cache
+        run: composer clear-cache
+
       - name: Install Dependencies
         run: composer install --no-progress --prefer-dist --optimize-autoloader
-
       - name: Copy Environment
         run: cp .env.example .env
 
@@ -73,4 +59,3 @@ jobs:
             php artisan cache:clear
             php artisan config:cache
             sudo systemctl restart nginx
->>>>>>> fb1745c (Update website: perbaikan dan hapus file lama)
