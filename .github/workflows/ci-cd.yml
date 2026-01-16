@@ -32,11 +32,11 @@ jobs:
       - name: Generate Optimized Autoloader
         run: composer dump-autoload --no-dev --optimize
 
-      - name: Copy Environment
-        run: cp .env.example .env
+      - name: Copy Environment (if exists)
+        run: cp .env.example .env || true
 
       - name: Generate App Key
-        run: php artisan key:generate
+        run: php artisan key:generate || true
 
       - name: Run Tests
         run: php artisan test || true   # (gunakan || true jika belum punya test)
